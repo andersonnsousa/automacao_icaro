@@ -1,0 +1,14 @@
+venv/
+analyses/
+data/
+models/
+notebooks/
+results/
+src/
+tests/
+utils/
+wandb/
+logs/
+install.bat
+start_gui.bat
+.env
