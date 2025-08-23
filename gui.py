@@ -8,15 +8,22 @@ import sys
 from urllib.parse import urlparse
 from datetime import datetime
 
+# --- CONFIGURAÇÃO DE LOGGING (Atualizada) ---
 import logging
+
+# Cria a pasta 'logs' se não existir
+os.makedirs("logs", exist_ok=True)
+
+# Configura o logging para salvar no arquivo dentro da pasta 'logs'
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler('analyzer.log', encoding='utf-8'),
+        logging.FileHandler('logs/analyzer.log', encoding='utf-8'),  # ✅ Caminho corrigido
         logging.StreamHandler(sys.stdout)
     ]
 )
+# --- FIM DA CONFIGURAÇÃO DE LOGGING ---
 
 class WebAnalyzerGUI:
     def __init__(self, root):
@@ -41,8 +48,6 @@ class WebAnalyzerGUI:
 
         self.analyze_btn = ttk.Button(self.root, text="▶ Analisar Página", command=self.start_analysis)
         self.analyze_btn.pack(pady=10)
-        
-        # Dentro de create_widgets(), após o botão de análise
 
         self.login_btn = ttk.Button(self.root, text="⚡ Login Rápido", command=self.quick_login)
         self.login_btn.pack(pady=10)
@@ -148,7 +153,11 @@ class WebAnalyzerGUI:
         thread = threading.Thread(target=run, daemon=True)
         thread.start()
 
+
 if __name__ == "__main__":
+    # Cria a pasta logs no início, antes de qualquer log
+    os.makedirs("logs", exist_ok=True)
+
     logging.info("="*60)
     logging.info("Iniciando Analisador Web Generalista")
     logging.info(f"Diretório: {os.getcwd()}")
