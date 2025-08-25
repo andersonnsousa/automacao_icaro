@@ -2,6 +2,7 @@
 import os
 import json
 import time
+import sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
@@ -10,9 +11,21 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from dotenv import load_dotenv
+import logging
 
+# --- CONFIGURAÇÃO DE LOGGING ---
+os.makedirs("logs", exist_ok=True)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    handlers=[
+        logging.FileHandler('logs/analyzer.log', encoding='utf-8'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+
+# --- CARREGA CREDENCIAIS ---
 load_dotenv()
-
 EMAIL = os.getenv("EMAIL")
 PASSWORD = os.getenv("PASSWORD")
 
@@ -22,149 +35,197 @@ if not EMAIL or not PASSWORD:
 EMAIL = str(EMAIL)
 PASSWORD = str(PASSWORD)
 
-COOKIES_FILE = "session_cookies_icaro.json"
-TARGET_URL = "https://icaro.eslcloud.com.br/users/sign_in"
-DASHBOARD_INDICATOR = "dashboard"  # Parte da URL que indica login bem-sucedido
+def get_latest_analysis_path(base_dir="analyses"):
+    """Encontra a análise mais recente de qualquer domínio."""
+    if not os.path.exists(base_dir):
+        logging.error(f"Pasta '{base_dir}' não encontrada.")
+        return None, None
 
-def save_cookies(driver):
-    """Salva os cookies da sessão autenticada."""
-    cookies = driver.get_cookies()
-    with open(COOKIES_FILE, 'w', encoding='utf-8') as f:
-        json.dump(cookies, f, indent=2)
-    print(f"🍪 Cookies salvos em: {COOKIES_FILE}")
+    all_paths = []
+    for domain in os.listdir(base_dir):
+        domain_path = os.path.join(base_dir, domain)
+        if os.path.isdir(domain_path):
+            for timestamp in os.listdir(domain_path):
+                ts_path = os.path.join(domain_path, timestamp)
+                if os.path.isdir(ts_path):
+                    all_paths.append(ts_path)
 
-def load_cookies(driver):
-    """Carrega cookies salvos e os adiciona à sessão."""
-    if not os.path.exists(COOKIES_FILE):
-        return False
-    try:
-        with open(COOKIES_FILE, 'r', encoding='utf-8') as f:
-            cookies = json.load(f)
-        for cookie in cookies:
-            # Remove 'sameSite' se causar erro
-            cookie.pop('sameSite', None)
-            try:
-                driver.add_cookie(cookie)
-            except Exception as e:
-                print(f"⚠️ Erro ao adicionar cookie: {e}")
-        print("🍪 Cookies carregados com sucesso.")
-        return True
-    except Exception as e:
-        print(f"❌ Falha ao carregar cookies: {e}")
-        return False
+    if not all_paths:
+        logging.error("Nenhuma análise encontrada.")
+        return None, None
 
-def is_logged_in(driver):
-    """Verifica se já está logado com base na URL ou em um elemento."""
-    current_url = driver.current_url.lower()
-    if DASHBOARD_INDICATOR in current_url:
-        return True
-    try:
-        # Verifica se o campo de email não está visível (indicando login)
-        WebDriverWait(driver, 3).until_not(
-            EC.presence_of_element_located((By.NAME, "user[email]"))
-        )
-        return True
-    except:
-        return False
+    latest_analysis = max(all_paths, key=os.path.getctime)
+    domain = os.path.basename(os.path.dirname(latest_analysis))
+    url = f"https://{domain}"
+    return latest_analysis, url
 
-def safe_send_keys(driver, xpath, value, timeout=10):
-    try:
-        field = WebDriverWait(driver, timeout).until(
-            EC.presence_of_element_located((By.XPATH, xpath))
-        )
-        driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", field)
-        field.clear()
-        field.send_keys(str(value))
-        return True
-    except TimeoutException:
-        print(f"❌ Timeout: Campo não encontrado (XPath: {xpath})")
-        return False
-    except Exception as e:
-        print(f"❌ Erro ao preencher campo: {e}")
-        return False
+def find_login_form(structure):
+    """Analisa o contexto para encontrar um formulário de login."""
+    email_field = None
+    password_field = None
+    submit_button = None
+    remember_checkbox = None
 
-def perform_login():
+    # Palavras-chave para busca
+    email_keywords = ['email', 'usuario', 'user', 'login', 'nome de usuário']
+    password_keywords = ['senha', 'password', 'pass']
+    login_keywords = ['entrar', 'login', 'sign in', 'acessar']
+    remember_keywords = ['lembrar', 'remember', 'manter conectado']
+
+    for el in structure:
+        tag = el['tag']
+        text = (el['text'] or '').lower()
+        value = (el['value'] or '').lower()
+        attrs = el['attributes']
+        full_text = f"{text} {value} {attrs.get('placeholder', '')} {attrs.get('name', '')} {attrs.get('id', '')}".lower()
+
+        # Campo de email
+        if tag == 'input' and not email_field:
+            for kw in email_keywords:
+                if kw in full_text:
+                    email_field = el
+                    break
+
+        # Campo de senha
+        if tag == 'input' and not password_field:
+            if attrs.get('type') == 'password':
+                password_field = el
+            else:
+                for kw in password_keywords:
+                    if kw in full_text:
+                        password_field = el
+                        break
+
+        # Botão de login
+        if (tag == 'input' or tag == 'button') and not submit_button:
+            for kw in login_keywords:
+                if kw in full_text:
+                    submit_button = el
+                    break
+
+        # Checkbox "Lembrar"
+        if tag == 'input' and not remember_checkbox:
+            if attrs.get('type') == 'checkbox':
+                for kw in remember_keywords:
+                    if kw in full_text:
+                        remember_checkbox = el
+                        break
+
+    return {
+        "email": email_field,
+        "password": password_field,
+        "submit": submit_button,
+        "remember": remember_checkbox
+    }
+
+def perform_adaptive_login():
+    """Executa o login usando inferência de contexto."""
+    logging.info("🔍 Procurando a análise mais recente...")
+    analysis_path, base_url = get_latest_analysis_path()
+
+    if not analysis_path or not base_url:
+        return
+
+    logging.info(f"📂 Análise encontrada: {analysis_path}")
+    logging.info(f"🌐 URL alvo: {base_url}")
+
+    # Carrega o contexto da página
+    json_path = os.path.join(analysis_path, "estrutura.json")
+    if not os.path.exists(json_path):
+        logging.error(f"❌ Arquivo estrutura.json não encontrado: {json_path}")
+        return
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        structure = json.load(f)
+
+    # Inferência de contexto
+    form = find_login_form(structure)
+
+    if not form["email"]:
+        logging.warning("⚠️ Campo de email não identificado no contexto.")
+    if not form["password"]:
+        logging.error("❌ Campo de senha não identificado. Login não pode continuar.")
+        return
+    if not form["submit"]:
+        logging.warning("⚠️ Botão de login não identificado.")
+
+    # Configuração do driver
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
-    # options.add_argument("--headless=new")  # Remova para ver o login
-
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
     try:
-        driver.get(TARGET_URL)
-        print("🌐 Acessando página de login...")
+        driver.get(base_url)
+        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
 
-        # Verifica se já está logado
-        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
-        if is_logged_in(driver):
-            print("✅ Você já está logado!")
-            input("Pressione ENTER para continuar...")
+        # Preenche o campo de email, se identificado
+        if form["email"]:
+            try:
+                field = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.XPATH, form["email"]["xpath"]))
+                )
+                driver.execute_script("arguments[0].scrollIntoView(true);", field)
+                field.send_keys(EMAIL)
+                logging.info("📧 Email preenchido.")
+            except Exception as e:
+                logging.warning(f"⚠️ Falha ao preencher email: {e}")
+
+        # Preenche o campo de senha
+        try:
+            field = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, form["password"]["xpath"]))
+            )
+            driver.execute_script("arguments[0].scrollIntoView(true);", field)
+            field.send_keys(PASSWORD)
+            logging.info("🔒 Senha preenchida.")
+        except Exception as e:
+            logging.error(f"❌ Falha ao preencher senha: {e}")
             return
 
-        # Tenta carregar cookies
-        if load_cookies(driver):
-            driver.refresh()
-            time.sleep(2)
-            if is_logged_in(driver):
-                print("✅ Login restaurado com cookies!")
-                input("Pressione ENTER para continuar...")
+        # Marca "Lembre-se de mim", se identificado
+        if form["remember"]:
+            try:
+                checkbox = driver.find_element(By.XPATH, form["remember"]["xpath"])
+                if not checkbox.is_selected():
+                    checkbox.click()
+                logging.info("✅ 'Lembre-se de mim' marcado.")
+            except Exception as e:
+                logging.warning(f"⚠️ Erro ao marcar checkbox: {e}")
+
+        # Clica no botão de login, se identificado
+        if form["submit"]:
+            try:
+                button = WebDriverWait(driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, form["submit"]["xpath"]))
+                )
+                driver.execute_script("arguments[0].scrollIntoView(true);", button)
+                button.click()
+                logging.info("🚀 Botão de login clicado.")
+            except Exception as e:
+                logging.warning(f"⚠️ Falha ao clicar no botão de login: {e}")
+        else:
+            # Se não houver botão, tenta enviar com Enter no campo de senha
+            try:
+                field.send_keys("\n")
+                logging.info("⌨️ Enviado com Enter (sem botão explícito).")
+            except:
+                logging.error("❌ Não foi possível enviar o formulário.")
                 return
 
-        # Se não funcionou, faz login manual
-        print("🔐 Iniciando login com credenciais...")
-
-        # Preenche email
-        if not safe_send_keys(driver, "//input[@name='user[email]']", EMAIL):
-            raise Exception("Campo de email não encontrado")
-
-        # Preenche senha
-        if not safe_send_keys(driver, "//input[@name='user[password]']", PASSWORD):
-            raise Exception("Campo de senha não encontrado")
-
-        # Marca "Lembre-se de mim"
-        try:
-            checkbox = driver.find_element(By.XPATH, "//input[@name='user[remember_me]']")
-            if not checkbox.is_selected():
-                driver.execute_script("arguments[0].click();", checkbox)
-        except:
-            pass
-
-        # Clica em "Entrar"
-        login_xpaths = [
-            "//input[@type='submit' and @value='Entrar']",
-            "//input[@type='submit']"
-        ]
-        login_clicado = False
-        for xpath in login_xpaths:
-            try:
-                button = WebDriverWait(driver, 5).until(
-                    EC.element_to_be_clickable((By.XPATH, xpath))
-                )
-                driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", button)
-                button.click()
-                login_clicado = True
-                break
-            except:
-                continue
-        if not login_clicado:
-            raise Exception("Botão de login não encontrado")
-
-        # Aguarda redirecionamento
+        # Aguarda por uma mudança de URL ou um elemento da página logada
+        logging.info("⏳ Aguardando login...")
         WebDriverWait(driver, 20).until(
-            lambda d: DASHBOARD_INDICATOR in d.current_url.lower()
+            lambda d: d.current_url != base_url
         )
-        print("🎉 Login bem-sucedido!")
-
-        # Salva cookies para uso futuro
-        save_cookies(driver)
+        logging.info(f"🎉 Login bem-sucedido! Nova URL: {driver.current_url}")
 
         input("\nPressione ENTER para fechar o navegador...")
     except Exception as e:
-        print(f"❌ Erro: {e}")
+        logging.error(f"❌ Erro durante o login: {e}")
         driver.save_screenshot("erro_login.png")
-        print("📸 Screenshot salvo.")
+        logging.info("📸 Screenshot salvo.")
     finally:
         driver.quit()
 
 if __name__ == "__main__":
-    perform_login()
+    perform_adaptive_login()

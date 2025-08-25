@@ -8,22 +8,22 @@ import sys
 from urllib.parse import urlparse
 from datetime import datetime
 
-# --- CONFIGURAÇÃO DE LOGGING (Atualizada) ---
+# --- CONFIGURAÇÃO DE LOGGING ---
 import logging
 
 # Cria a pasta 'logs' se não existir
 os.makedirs("logs", exist_ok=True)
 
-# Configura o logging para salvar no arquivo dentro da pasta 'logs'
+# Configura o logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
-        logging.FileHandler('logs/analyzer.log', encoding='utf-8'),  # ✅ Caminho corrigido
+        logging.FileHandler('logs/analyzer.log', encoding='utf-8'),
         logging.StreamHandler(sys.stdout)
     ]
 )
-# --- FIM DA CONFIGURAÇÃO DE LOGGING ---
+# --- FIM DA CONFIGURAÇÃO ---
 
 class WebAnalyzerGUI:
     def __init__(self, root):
@@ -76,16 +76,13 @@ class WebAnalyzerGUI:
         base_dir = os.path.join("analyses", domain)
         output_dir = os.path.join(base_dir, timestamp)
 
-        # Garante que a pasta existe
         os.makedirs(output_dir, exist_ok=True)
-
         self.current_output_dir = output_dir
         self.open_btn.config(state="disabled")
         self.analyze_btn.config(state="disabled")
         self.progress["value"] = 0
         self.progress_label.config(text="Iniciando análise...")
 
-        # Executa em thread separada
         thread = threading.Thread(target=self.run_analysis_in_thread, args=(url, output_dir), daemon=True)
         thread.start()
 
@@ -105,17 +102,13 @@ class WebAnalyzerGUI:
 
         try:
             update_progress(20)
-
-            # Comando para executar main.py
             cmd = [
                 sys.executable, "main.py",
                 "--url", url,
                 "--output-dir", output_dir
             ]
-
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
 
-            # Log de saída
             if result.stdout:
                 logging.info("STDOUT:\n" + result.stdout)
             if result.stderr:
@@ -135,29 +128,23 @@ class WebAnalyzerGUI:
 
     def open_results(self):
         if self.current_output_dir and os.path.exists(self.current_output_dir):
-            os.startfile(self.current_output_dir)  # Windows
+            os.startfile(self.current_output_dir)
         else:
             messagebox.showwarning("Aviso", "Pasta não encontrada.")
 
     def quick_login(self):
-        """Executa o login rápido em uma thread separada"""
+        """Executa o login adaptativo em uma thread separada"""
         def run():
             try:
-                # Importa o módulo de login
                 import autologin
-                # Executa na mesma thread do Selenium
-                autologin.perform_login()
+                autologin.perform_adaptive_login()
             except Exception as e:
                 self.root.after(0, lambda: messagebox.showerror("Erro", f"Falha no login:\n{e}"))
-
         thread = threading.Thread(target=run, daemon=True)
         thread.start()
 
-
 if __name__ == "__main__":
-    # Cria a pasta logs no início, antes de qualquer log
     os.makedirs("logs", exist_ok=True)
-
     logging.info("="*60)
     logging.info("Iniciando Analisador Web Generalista")
     logging.info(f"Diretório: {os.getcwd()}")
