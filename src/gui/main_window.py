@@ -1,4 +1,4 @@
-# gui.py
+# src/gui/main_window.py
 import tkinter as tk
 from tkinter import ttk, messagebox
 import threading
@@ -8,18 +8,11 @@ import sys
 from urllib.parse import urlparse
 from datetime import datetime
 import json
+from pathlib import Path
 
 # --- CONFIGURAÇÃO DE LOGGING ---
-os.makedirs("logs", exist_ok=True)
 import logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s',
-    handlers=[
-        logging.FileHandler('logs/analyzer.log', encoding='utf-8'),
-        logging.StreamHandler(sys.stdout)
-    ]
-)
+from src.core.logger import logger
 
 class WebAnalyzerGUI:
     def __init__(self, root):
@@ -30,17 +23,15 @@ class WebAnalyzerGUI:
         self.setup_styles()
         self.create_widgets()
         self.load_analyses()
-        logging.info("GUI iniciada.")
+        logger.info("GUI iniciada.")
 
     def setup_styles(self):
         style = ttk.Style()
-        # style.theme_use('clam')  # Pode causar problemas no Python 3.13
         style.configure("TButton", padding=8, font=("Helvetica", 10))
         style.configure("TLabel", font=("Helvetica", 11))
         style.configure("Header.TLabel", font=("Helvetica", 16, "bold"))
         style.configure("Treeview", rowheight=28, font=("Helvetica", 9))
         style.configure("Treeview.Heading", font=("Helvetica", 10, "bold"))
-        # ❌ Removido: style.map("TNotebook.Tab", padding=...) → causa erro no Python 3.13
 
     def create_widgets(self):
         # === Painel Superior: Entrada e Ações ===
@@ -51,8 +42,11 @@ class WebAnalyzerGUI:
         self.url_var = tk.StringVar(value="https://")
         ttk.Entry(top_frame, textvariable=self.url_var, width=60).pack(side="left", padx=(0, 10))
 
-        ttk.Button(top_frame, text="▶ Analisar", command=self.start_analysis, width=12).pack(side="left", padx=2)
-        ttk.Button(top_frame, text="⚡ Login Rápido", command=self.quick_login, width=15).pack(side="left", padx=2)
+        self.analyze_btn = ttk.Button(top_frame, text="▶ Analisar", command=self.start_analysis, width=12)
+        self.analyze_btn.pack(side="left", padx=2)
+
+        self.login_btn = ttk.Button(top_frame, text="⚡ Login Rápido", command=self.quick_login, width=15)
+        self.login_btn.pack(side="left", padx=2)
 
         # === Painel Principal: Abas ===
         self.tab_control = ttk.Notebook(self.root)
@@ -104,24 +98,23 @@ class WebAnalyzerGUI:
         for item in self.tree.get_children():
             self.tree.delete(item)
 
-        if not os.path.exists("analyses"):
+        if not os.path.exists("data/analyses"):
             return
 
-        for domain in os.listdir("analyses"):
-            domain_path = os.path.join("analyses", domain)
+        for domain in os.listdir("data/analyses"):
+            domain_path = os.path.join("data/analyses", domain)
             if os.path.isdir(domain_path):
                 parent = self.tree.insert("", "end", text=domain, open=False)
                 timestamps = sorted([t for t in os.listdir(domain_path) if os.path.isdir(os.path.join(domain_path, t))], reverse=True)
                 for ts in timestamps:
-                    json_path = os.path.join(domain_path, ts, "estrutura.json")
+                    json_path = os.path.join(domain_path, ts, "context.json")
                     url = "Desconhecida"
                     if os.path.exists(json_path):
                         try:
                             with open(json_path, "r", encoding="utf-8") as f:
                                 data = json.load(f)
-                                if data:
-                                    # Tenta extrair a URL da análise (opcional)
-                                    pass
+                                # Tenta extrair uma URL base do contexto (opcional)
+                                pass
                         except:
                             pass
                     ts_display = ts.replace("_", " ").replace("-", ":")
@@ -149,11 +142,11 @@ class WebAnalyzerGUI:
 
     def view_selected_analysis(self):
         if hasattr(self, 'selected_analysis_path') and os.path.exists(self.selected_analysis_path):
-            html_path = os.path.join(self.selected_analysis_path, "visualizador.html")
+            html_path = os.path.join(self.selected_analysis_path, "visualizer.html")
             if os.path.exists(html_path):
                 os.startfile(html_path)
             else:
-                messagebox.showwarning("Aviso", "visualizador.html não encontrado.")
+                messagebox.showwarning("Aviso", "visualizer.html não encontrado.")
         else:
             messagebox.showwarning("Aviso", "Análise não encontrada.")
 
@@ -166,12 +159,13 @@ class WebAnalyzerGUI:
         parsed = urlparse(url)
         domain = parsed.netloc.replace("www.", "")
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        base_dir = os.path.join("analyses", domain)
+        base_dir = os.path.join("data/analyses", domain)
         output_dir = os.path.join(base_dir, timestamp)
 
         self.current_output_dir = output_dir
         self.open_btn.config(state="disabled")
         self.view_btn.config(state="disabled")
+        self.analyze_btn.config(state="disabled")
         self.progress["value"] = 0
         self.progress_label.config(text="Iniciando análise...")
         self.status_var.set(f"Analisando: {url}")
@@ -180,36 +174,129 @@ class WebAnalyzerGUI:
         thread.start()
 
     def run_analysis_in_thread(self, url, output_dir):
+        """Executa a análise em uma thread separada."""
         def update_progress(value):
             self.progress["value"] = value
             self.progress_label.config(text=f"Progresso: {int(value)}%")
 
         def finish(success, message):
-            self.progress_label.config(text="✅ Concluído!" if success else "❌ Falha")
-            self.status_var.set("Análise finalizada." if success else "Falha na análise.")
+            self.analyze_btn.config(state="normal")
+            if success:
+                self.progress_label.config(text="✅ Concluído!")
+                self.open_btn.config(state="normal")
+            else:
+                self.progress_label.config(text="❌ Falha")
+            messagebox.showinfo("Resultado", message) if success else messagebox.showerror("Erro", message)
+            self.load_analyses()
+
+        try:
+            update_progress(20)
+
+            # --- DEPURAÇÃO INTENSIVA ---
+            project_root = Path(__file__).parent.parent
+            main_script = project_root / "main.py"
+
+            # Logs de depuração
+            logger.info(f"[DEPURAÇÃO] __file__ = {__file__}")
+            logger.info(f"[DEPURAÇÃO] project_root = {project_root}")
+            logger.info(f"[DEPURAÇÃO] main_script = {main_script}")
+            logger.info(f"[DEPURAÇÃO] main_script.exists() = {main_script.exists()}")
+            logger.info(f"[DEPURAÇÃO] main_script.absolute() = {main_script.absolute()}")
+            logger.info(f"[DEPURAÇÃO] main_script.is_file() = {main_script.is_file()}")
+
+            if not main_script.exists() or not main_script.is_file():
+                raise FileNotFoundError(f"Arquivo main.py não encontrado ou não é um arquivo em: {main_script.absolute()}")
+
+            cmd = [
+                sys.executable,
+                str(main_script),
+                "--url", url,
+                "--output-dir", output_dir
+            ]
+
+            logger.info(f"Executando comando: {' '.join(cmd)}")
+
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, cwd=project_root)
+
+            if result.stdout:
+                logger.info("STDOUT:\n" + result.stdout)
+            if result.stderr:
+                logger.error("STDERR:\n" + result.stderr)
+
+            if result.returncode != 0:
+                raise Exception(result.stderr or "Erro desconhecido")
+
+            update_progress(100)
+            logger.info(f"Sucesso: {output_dir}")
+            finish(True, f"✅ Sucesso!\n{output_dir}")
+
+        except Exception as e:
+            error_msg = str(e).split('\n')[0]
+            logger.error(f"Falha: {error_msg}")
+            finish(False, f"❌ Erro:\n{error_msg}")
+        """Executa a análise em uma thread separada."""
+        def update_progress(value):
+            self.progress["value"] = value
+            self.progress_label.config(text=f"Progresso: {int(value)}%")
+
+        def finish(success, message):
+            self.analyze_btn.config(state="normal")
+            if success:
+                self.progress_label.config(text="✅ Concluído!")
+                self.open_btn.config(state="normal")
+            else:
+                self.progress_label.config(text="❌ Falha")
             messagebox.showinfo("Resultado", message) if success else messagebox.showerror("Erro", message)
             self.load_analyses()  # Atualiza a lista
 
         try:
             update_progress(20)
-            cmd = [sys.executable, "main.py", "--url", url, "--output-dir", output_dir]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
 
+            # --- CORREÇÃO DE CAMINHO ---
+            # O __file__ está em src/gui/main_window.py
+            # Precisamos subir três níveis: gui -> src -> raiz
+            project_root = Path(__file__).parent.parent.parent  # ✅ Corrigido
+            main_script = project_root / "main.py"
+
+            # Logs de depuração
+            logger.info(f"[DEPURAÇÃO] __file__ = {__file__}")
+            logger.info(f"[DEPURAÇÃO] project_root = {project_root}")
+            logger.info(f"[DEPURAÇÃO] main_script = {main_script}")
+            logger.info(f"[DEPURAÇÃO] main_script.exists() = {main_script.exists()}")
+
+            if not main_script.exists() or not main_script.is_file():
+                raise FileNotFoundError(f"Arquivo main.py não encontrado ou não é um arquivo em: {main_script.absolute()}")
+
+            cmd = [
+                sys.executable,
+                str(main_script),
+                "--url", url,
+                "--output-dir", output_dir
+            ]
+
+            logger.info(f"Executando comando: {' '.join(cmd)}")
+
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300, cwd=project_root)
+
+            if result.stdout:
+                logger.info("STDOUT:\n" + result.stdout)
             if result.stderr:
-                logging.error("STDERR:\n" + result.stderr)
+                logger.error("STDERR:\n" + result.stderr)
+
             if result.returncode != 0:
                 raise Exception(result.stderr or "Erro desconhecido")
 
             update_progress(100)
-            logging.info(f"Sucesso: {output_dir}")
+            logger.info(f"Sucesso: {output_dir}")
             finish(True, f"✅ Sucesso!\n{output_dir}")
 
         except Exception as e:
             error_msg = str(e).split('\n')[0]
-            logging.error(f"Falha: {error_msg}")
+            logger.error(f"Falha: {error_msg}")
             finish(False, f"❌ Erro:\n{error_msg}")
 
     def quick_login(self):
+        """Executa o login rápido adaptativo em uma thread separada"""
         def run():
             try:
                 import autologin
@@ -220,13 +307,13 @@ class WebAnalyzerGUI:
         thread.start()
 
 if __name__ == "__main__":
-    logging.info("="*60)
-    logging.info("Iniciando Analisador Web Adaptativo")
-    logging.info(f"Diretório: {os.getcwd()}")
+    logger.info("="*60)
+    logger.info("Iniciando Analisador Web Adaptativo")
+    logger.info(f"Diretório: {os.getcwd()}")
     try:
         root = tk.Tk()
         app = WebAnalyzerGUI(root)
         root.mainloop()
     except Exception as e:
-        logging.critical(f"Falha crítica: {e}", exc_info=True)
+        logger.critical(f"Falha crítica: {e}", exc_info=True)
         messagebox.showerror("Erro", f"Erro ao iniciar GUI:\n{e}")

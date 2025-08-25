@@ -1,5 +1,5 @@
 ﻿# main.py
-import sys
+
 from src.core.config import Config
 from src.core.logger import logger
 from src.analyzer.scraper import WebScraper
@@ -8,6 +8,7 @@ from src.automation.login_engine import LoginEngine
 from urllib.parse import urlparse
 from datetime import datetime
 import json
+import sys
 
 def main():
     if len(sys.argv) < 2:
