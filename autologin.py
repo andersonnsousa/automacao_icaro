@@ -36,7 +36,6 @@ EMAIL = str(EMAIL)
 PASSWORD = str(PASSWORD)
 
 def get_latest_analysis_path(base_dir="analyses"):
-    """Encontra a análise mais recente de qualquer domínio."""
     if not os.path.exists(base_dir):
         logging.error(f"Pasta '{base_dir}' não encontrada.")
         return None, None
@@ -60,13 +59,11 @@ def get_latest_analysis_path(base_dir="analyses"):
     return latest_analysis, url
 
 def find_login_form(structure):
-    """Analisa o contexto para encontrar um formulário de login."""
     email_field = None
     password_field = None
     submit_button = None
     remember_checkbox = None
 
-    # Palavras-chave para busca
     email_keywords = ['email', 'usuario', 'user', 'login', 'nome de usuário']
     password_keywords = ['senha', 'password', 'pass']
     login_keywords = ['entrar', 'login', 'sign in', 'acessar']
@@ -79,14 +76,12 @@ def find_login_form(structure):
         attrs = el['attributes']
         full_text = f"{text} {value} {attrs.get('placeholder', '')} {attrs.get('name', '')} {attrs.get('id', '')}".lower()
 
-        # Campo de email
         if tag == 'input' and not email_field:
             for kw in email_keywords:
                 if kw in full_text:
                     email_field = el
                     break
 
-        # Campo de senha
         if tag == 'input' and not password_field:
             if attrs.get('type') == 'password':
                 password_field = el
@@ -96,14 +91,12 @@ def find_login_form(structure):
                         password_field = el
                         break
 
-        # Botão de login
         if (tag == 'input' or tag == 'button') and not submit_button:
             for kw in login_keywords:
                 if kw in full_text:
                     submit_button = el
                     break
 
-        # Checkbox "Lembrar"
         if tag == 'input' and not remember_checkbox:
             if attrs.get('type') == 'checkbox':
                 for kw in remember_keywords:
@@ -119,7 +112,6 @@ def find_login_form(structure):
     }
 
 def perform_adaptive_login():
-    """Executa o login usando inferência de contexto."""
     logging.info("🔍 Procurando a análise mais recente...")
     analysis_path, base_url = get_latest_analysis_path()
 
@@ -129,7 +121,6 @@ def perform_adaptive_login():
     logging.info(f"📂 Análise encontrada: {analysis_path}")
     logging.info(f"🌐 URL alvo: {base_url}")
 
-    # Carrega o contexto da página
     json_path = os.path.join(analysis_path, "estrutura.json")
     if not os.path.exists(json_path):
         logging.error(f"❌ Arquivo estrutura.json não encontrado: {json_path}")
@@ -138,7 +129,6 @@ def perform_adaptive_login():
     with open(json_path, "r", encoding="utf-8") as f:
         structure = json.load(f)
 
-    # Inferência de contexto
     form = find_login_form(structure)
 
     if not form["email"]:
@@ -149,7 +139,6 @@ def perform_adaptive_login():
     if not form["submit"]:
         logging.warning("⚠️ Botão de login não identificado.")
 
-    # Configuração do driver
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
@@ -158,7 +147,6 @@ def perform_adaptive_login():
         driver.get(base_url)
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
 
-        # Preenche o campo de email, se identificado
         if form["email"]:
             try:
                 field = WebDriverWait(driver, 10).until(
@@ -170,7 +158,6 @@ def perform_adaptive_login():
             except Exception as e:
                 logging.warning(f"⚠️ Falha ao preencher email: {e}")
 
-        # Preenche o campo de senha
         try:
             field = WebDriverWait(driver, 10).until(
                 EC.presence_of_element_located((By.XPATH, form["password"]["xpath"]))
@@ -182,7 +169,6 @@ def perform_adaptive_login():
             logging.error(f"❌ Falha ao preencher senha: {e}")
             return
 
-        # Marca "Lembre-se de mim", se identificado
         if form["remember"]:
             try:
                 checkbox = driver.find_element(By.XPATH, form["remember"]["xpath"])
@@ -192,7 +178,6 @@ def perform_adaptive_login():
             except Exception as e:
                 logging.warning(f"⚠️ Erro ao marcar checkbox: {e}")
 
-        # Clica no botão de login, se identificado
         if form["submit"]:
             try:
                 button = WebDriverWait(driver, 10).until(
@@ -204,15 +189,13 @@ def perform_adaptive_login():
             except Exception as e:
                 logging.warning(f"⚠️ Falha ao clicar no botão de login: {e}")
         else:
-            # Se não houver botão, tenta enviar com Enter no campo de senha
             try:
                 field.send_keys("\n")
-                logging.info("⌨️ Enviado com Enter (sem botão explícito).")
+                logging.info("⌨️ Enviado com Enter.")
             except:
                 logging.error("❌ Não foi possível enviar o formulário.")
                 return
 
-        # Aguarda por uma mudança de URL ou um elemento da página logada
         logging.info("⏳ Aguardando login...")
         WebDriverWait(driver, 20).until(
             lambda d: d.current_url != base_url

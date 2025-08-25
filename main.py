@@ -26,7 +26,6 @@ OUTPUT_DIR = args.output_dir
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def extract_structure(driver, url):
-    """Extração generalista: coleta todos os elementos visíveis sem pré-julgamento."""
     try:
         driver.get(url)
         WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
@@ -48,7 +47,6 @@ def extract_structure(driver, url):
     except:
         title = "Página não carregada"
 
-    # Seletores para capturar a maioria dos elementos interativos
     all_elements = driver.find_elements(By.XPATH, """
         //*[
             (text() != '' and not(self::script or self::style))
@@ -69,7 +67,6 @@ def extract_structure(driver, url):
             if not el.is_displayed():
                 continue
 
-            # Coleta todos os atributos possíveis
             attributes = {}
             for attr in ['name', 'id', 'class', 'type', 'placeholder', 'href', 'title', 'alt', 'value', 'src']:
                 val = el.get_attribute(attr)
@@ -81,7 +78,6 @@ def extract_structure(driver, url):
             text = el.text.strip()
             value = el.get_attribute("value") or ""
 
-            # Gera um XPath único
             xpath = driver.execute_script("""
                 function getXPath(elt) {
                     if (elt.id) return '//*[@id="' + elt.id + '"]';
@@ -119,7 +115,6 @@ def extract_structure(driver, url):
             print(f"[WARN] Ignorando elemento {idx}: {e}")
             continue
 
-    # Ordena por posição visual (topo para baixo, esquerda para direita)
     structure.sort(key=lambda x: (x['y'], x['x']))
     return structure, title
 
@@ -181,17 +176,14 @@ def main():
     try:
         structure, title = extract_structure(driver, URL)
 
-        # Salva o contexto da página
         with open(os.path.join(OUTPUT_DIR, "estrutura.json"), "w", encoding="utf-8") as f:
             json.dump(structure, f, ensure_ascii=False, indent=2)
 
-        # Captura de tela
         screenshot = os.path.join(OUTPUT_DIR, "pagina.png")
         annotated = os.path.join(OUTPUT_DIR, "pagina_anotada.png")
         driver.save_screenshot(screenshot)
         draw_bounding_boxes(structure, screenshot, annotated)
 
-        # Gera o visualizador
         generate_web_viewer(structure, os.path.join(OUTPUT_DIR, "visualizador.html"), title, URL)
 
         print(f"[OK] Análise concluída: {OUTPUT_DIR}")
