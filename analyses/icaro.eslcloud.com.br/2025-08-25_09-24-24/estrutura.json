@@ -1,0 +1,425 @@
+[
+  {
+    "index": 5,
+    "tag": "body",
+    "text": "Seja bem-vindo!\nLembre-se de mim\n\nSou um cliente\n\nSou um agente\n\nSou um posto avançado\n\nSou um destinatário\nEsqueceu sua senha?\n© 2025 - ESL | Todos os direitos reservados",
+    "value": "",
+    "attributes": {
+      "class": "login"
+    },
+    "x": 0,
+    "y": 50,
+    "width": 1169,
+    "height": 676,
+    "xpath": "body"
+  },
+  {
+    "index": 6,
+    "tag": "div",
+    "text": "",
+    "value": "",
+    "attributes": {
+      "class": "logo"
+    },
+    "x": 0,
+    "y": 50,
+    "width": 1169,
+    "height": 160,
+    "xpath": "body/DIV[1]"
+  },
+  {
+    "index": 7,
+    "tag": "a",
+    "text": "",
+    "value": "",
+    "attributes": {
+      "href": "https://eslsistemas.com.br/"
+    },
+    "x": 509.62,
+    "y": 118.75,
+    "width": 150,
+    "height": 19,
+    "xpath": "body/DIV[1]/A[1]"
+  },
+  {
+    "index": 9,
+    "tag": "div",
+    "text": "Seja bem-vindo!\nLembre-se de mim\n\nSou um cliente\n\nSou um agente\n\nSou um posto avançado\n\nSou um destinatário\nEsqueceu sua senha?",
+    "value": "",
+    "attributes": {
+      "class": "content"
+    },
+    "x": 384.5,
+    "y": 240,
+    "width": 400,
+    "height": 438,
+    "xpath": "body/DIV[3]"
+  },
+  {
+    "index": 10,
+    "tag": "h3",
+    "text": "Seja bem-vindo!",
+    "value": "",
+    "attributes": {
+      "class": "form-title font-blue-steel"
+    },
+    "x": 414.5,
+    "y": 270,
+    "width": 340,
+    "height": 31,
+    "xpath": "body/DIV[3]/H3[1]"
+  },
+  {
+    "index": 11,
+    "tag": "form",
+    "text": "Lembre-se de mim\n\nSou um cliente\n\nSou um agente\n\nSou um posto avançado\n\nSou um destinatário\nEsqueceu sua senha?",
+    "value": "",
+    "attributes": {
+      "id": "new_user",
+      "class": "simple_form login-form"
+    },
+    "x": 414.5,
+    "y": 325.8,
+    "width": 340,
+    "height": 322,
+    "xpath": "//*[@id=\"new_user\"]"
+  },
+  {
+    "index": 14,
+    "tag": "div",
+    "text": "",
+    "value": "",
+    "attributes": {
+      "class": "form-inputs"
+    },
+    "x": 414.5,
+    "y": 325.8,
+    "width": 340,
+    "height": 101,
+    "xpath": "//*[@id=\"new_user\"]/DIV[1]"
+  },
+  {
+    "index": 16,
+    "tag": "div",
+    "text": "",
+    "value": "",
+    "attributes": {
+      "class": "form-group email optional user_email"
+    },
+    "x": 414.5,
+    "y": 325.8,
+    "width": 340,
+    "height": 43,
+    "xpath": "//*[@id=\"new_user\"]/DIV[1]/DIV[1]"
+  },
+  {
+    "index": 17,
+    "tag": "input",
+    "text": "",
+    "value": "",
+    "attributes": {
+      "name": "user[email]",
+      "id": "user_email",
+      "class": "form-control string email optional input-sm",
+      "type": "email",
+      "placeholder": "E-mail"
+    },
+    "x": 414.5,
+    "y": 325.8,
+    "width": 340,
+    "height": 43,
+    "xpath": "//*[@id=\"user_email\"]"
+  },
+  {
+    "index": 18,
+    "tag": "div",
+    "text": "",
+    "value": "",
+    "attributes": {
+      "class": "form-group password optional user_password"
+    },
+    "x": 414.5,
+    "y": 383.8,
+    "width": 340,
+    "height": 43,
+    "xpath": "//*[@id=\"new_user\"]/DIV[1]/DIV[2]"
+  },
+  {
+    "index": 19,
+    "tag": "input",
+    "text": "",
+    "value": "",
+    "attributes": {
+      "name": "user[password]",
+      "id": "user_password",
+      "class": "form-control password optional input-sm",
+      "type": "password",
+      "placeholder": "Senha"
+    },
+    "x": 414.5,
+    "y": 383.8,
+    "width": 340,
+    "height": 43,
+    "xpath": "//*[@id=\"user_password\"]"
+  },
+  {
+    "index": 20,
+    "tag": "div",
+    "text": "Lembre-se de mim",
+    "value": "",
+    "attributes": {
+      "class": "form-actions"
+    },
+    "x": 384.5,
+    "y": 441.8,
+    "width": 400,
+    "height": 106,
+    "xpath": "//*[@id=\"new_user\"]/DIV[2]"
+  },
+  {
+    "index": 21,
+    "tag": "div",
+    "text": "Lembre-se de mim",
+    "value": "",
+    "attributes": {
+      "class": "row"
+    },
+    "x": 399.5,
+    "y": 466.8,
+    "width": 370,
+    "height": 55,
+    "xpath": "//*[@id=\"new_user\"]/DIV[2]/DIV[1]"
+  },
+  {
+    "index": 22,
+    "tag": "div",
+    "text": "",
+    "value": "",
+    "attributes": {
+      "class": "col-sm-3"
+    },
+    "x": 399.5,
+    "y": 466.8,
+    "width": 93,
+    "height": 43,
+    "xpath": "//*[@id=\"new_user\"]/DIV[2]/DIV[1]/DIV[1]"
+  },
+  {
+    "index": 24,
+    "tag": "div",
+    "text": "Lembre-se de mim",
+    "value": "",
+    "attributes": {
+      "class": "col-sm-6"
+    },
+    "x": 492,
+    "y": 466.8,
+    "width": 185,
+    "height": 55,
+    "xpath": "//*[@id=\"new_user\"]/DIV[2]/DIV[1]/DIV[2]"
+  },
+  {
+    "index": 23,
+    "tag": "input",
+    "text": "",
+    "value": "Entrar",
+    "attributes": {
+      "name": "commit",
+      "class": "btn btn-primary",
+      "type": "submit",
+      "value": "Entrar"
+    },
+    "x": 414.5,
+    "y": 467.8,
+    "width": 84,
+    "height": 42,
+    "xpath": "//*[@id=\"new_user\"]/DIV[2]/DIV[1]/DIV[1]/INPUT[1]"
+  },
+  {
+    "index": 25,
+    "tag": "label",
+    "text": "Lembre-se de mim",
+    "value": "",
+    "attributes": {
+      "class": "rememberme check mt-checkbox mt-checkbox-outline"
+    },
+    "x": 515,
+    "y": 476.8,
+    "width": 146,
+    "height": 40,
+    "xpath": "//*[@id=\"new_user\"]/DIV[2]/DIV[1]/DIV[2]/LABEL[1]"
+  },
+  {
+    "index": 26,
+    "tag": "div",
+    "text": "Lembre-se de mim",
+    "value": "",
+    "attributes": {
+      "class": "form-group boolean optional user_remember_me"
+    },
+    "x": 515,
+    "y": 476.8,
+    "width": 146,
+    "height": 25,
+    "xpath": "//*[@id=\"new_user\"]/DIV[2]/DIV[1]/DIV[2]/LABEL[1]/DIV[1]"
+  },
+  {
+    "index": 27,
+    "tag": "div",
+    "text": "Lembre-se de mim",
+    "value": "",
+    "attributes": {
+      "class": "checkbox-list"
+    },
+    "x": 515,
+    "y": 476.8,
+    "width": 146,
+    "height": 25,
+    "xpath": "//*[@id=\"new_user\"]/DIV[2]/DIV[1]/DIV[2]/LABEL[1]/DIV[1]/DIV[1]"
+  },
+  {
+    "index": 31,
+    "tag": "label",
+    "text": "Lembre-se de mim",
+    "value": "",
+    "attributes": {
+      "class": "boolean optional"
+    },
+    "x": 539,
+    "y": 476.8,
+    "width": 122,
+    "height": 20,
+    "xpath": "//*[@id=\"new_user\"]/DIV[2]/DIV[1]/DIV[2]/LABEL[1]/DIV[1]/DIV[1]/DIV[1]/LABEL[1]"
+  },
+  {
+    "index": 29,
+    "tag": "div",
+    "text": "",
+    "value": "",
+    "attributes": {
+      "id": "uniform-user_remember_me",
+      "class": "checker"
+    },
+    "x": 515,
+    "y": 478.55,
+    "width": 19,
+    "height": 19,
+    "xpath": "//*[@id=\"uniform-user_remember_me\"]"
+  },
+  {
+    "index": 32,
+    "tag": "div",
+    "text": "Sou um cliente\n\nSou um agente\n\nSou um posto avançado\n\nSou um destinatário\nEsqueceu sua senha?",
+    "value": "",
+    "attributes": {
+      "class": "row links"
+    },
+    "x": 399.5,
+    "y": 547.8,
+    "width": 370,
+    "height": 100,
+    "xpath": "//*[@id=\"new_user\"]/DIV[3]"
+  },
+  {
+    "index": 33,
+    "tag": "div",
+    "text": "Sou um cliente\n\nSou um agente\n\nSou um posto avançado\n\nSou um destinatário\nEsqueceu sua senha?",
+    "value": "",
+    "attributes": {
+      "class": "col-sm-12"
+    },
+    "x": 399.5,
+    "y": 547.8,
+    "width": 370,
+    "height": 100,
+    "xpath": "//*[@id=\"new_user\"]/DIV[3]/DIV[1]"
+  },
+  {
+    "index": 34,
+    "tag": "a",
+    "text": "Sou um cliente",
+    "value": "",
+    "attributes": {
+      "class": "pull-right",
+      "href": "https://icaro.eslcloud.com.br/guests/sign_in"
+    },
+    "x": 657.92,
+    "y": 567.8,
+    "width": 97,
+    "height": 20,
+    "xpath": "//*[@id=\"new_user\"]/DIV[3]/DIV[1]/A[1]"
+  },
+  {
+    "index": 35,
+    "tag": "a",
+    "text": "Sou um agente",
+    "value": "",
+    "attributes": {
+      "class": "pull-right",
+      "href": "https://icaro.eslcloud.com.br/agents/sign_in"
+    },
+    "x": 656.31,
+    "y": 587.8,
+    "width": 98,
+    "height": 20,
+    "xpath": "//*[@id=\"new_user\"]/DIV[3]/DIV[1]/A[2]"
+  },
+  {
+    "index": 36,
+    "tag": "a",
+    "text": "Sou um posto avançado",
+    "value": "",
+    "attributes": {
+      "class": "pull-right",
+      "href": "https://icaro.eslcloud.com.br/outposts/sign_in"
+    },
+    "x": 597.67,
+    "y": 607.8,
+    "width": 157,
+    "height": 20,
+    "xpath": "//*[@id=\"new_user\"]/DIV[3]/DIV[1]/A[3]"
+  },
+  {
+    "index": 38,
+    "tag": "a",
+    "text": "Esqueceu sua senha?",
+    "value": "",
+    "attributes": {
+      "href": "https://icaro.eslcloud.com.br/users/password/new"
+    },
+    "x": 414.5,
+    "y": 627.8,
+    "width": 138,
+    "height": 19,
+    "xpath": "//*[@id=\"new_user\"]/DIV[3]/DIV[1]/A[5]"
+  },
+  {
+    "index": 37,
+    "tag": "a",
+    "text": "Sou um destinatário",
+    "value": "",
+    "attributes": {
+      "class": "pull-right",
+      "href": "https://icaro.eslcloud.com.br/recipient_tracking"
+    },
+    "x": 622.55,
+    "y": 627.8,
+    "width": 132,
+    "height": 20,
+    "xpath": "//*[@id=\"new_user\"]/DIV[3]/DIV[1]/A[4]"
+  },
+  {
+    "index": 39,
+    "tag": "div",
+    "text": "© 2025 - ESL | Todos os direitos reservados",
+    "value": "",
+    "attributes": {
+      "class": "copyright"
+    },
+    "x": 0,
+    "y": 687.8,
+    "width": 1169,
+    "height": 39,
+    "xpath": "body/DIV[4]"
+  }
+]

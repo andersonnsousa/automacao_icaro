@@ -1,0 +1,9 @@
+<html><head><title>Visualizador</title>
+        <style>body{font-family:Arial;margin:20px}.element{border:1px solid #ddd;padding:10px;margin:10px 0;background:#fff}
+        .type{font-weight:bold;color:#1a73e8}.pos{color:#666}.xpath{font-family:monospace;background:#eee;padding:3px}
+        </style></head><body><h1>Elementos</h1><div id="elements-container"></div><script>const structure = [];
+        const c = document.getElementById('elements-container'); structure.forEach(i => {
+        const d = document.createElement('div'); d.className='element';
+        d.innerHTML = `<div class="type">${i.type}</div><div class="text">"${i.text}"</div>
+        <div class="pos">(${i.x},${i.y})</div><div class="xpath">${i.xpath}</div>`; c.appendChild(d); });
+        </script></body></html>

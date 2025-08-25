@@ -1,4 +1,4 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 *$py.class
@@ -25,35 +25,35 @@ venv/
 env/
 ENV/
 .venv/
-.env
-.env.*
-
-# Logs
-*.log
-logs/*.log
 
 # Sistemas
 .DS_Store
 Thumbs.db
 
-# Arquivos do sistema
+# Arquivos temporários
 *.swp
 *.swo
 
-# Arquivos temporários do Selenium
-/webdriver/
-driver.log
+# Logs
+logs/
+*.log
 
-# Resultados da análise (opcional no Git)
-/analyses/
+# Dados Sensíveis
+.env
+.env.*
 
-# Executáveis gerados
+# Resultados da Análise
+data/analyses/
+data/sessions/
+
+# Arquivos do Sistema
+.vscode/
+.idea/
+*.pyc
+
+# WebDriver Manager
+.wdm/
+
+# Executáveis
 *.exe
 *.msi
-
-# Arquivos do IDE
-.idea/
-*.swp
-*.swo
-.vscode/
-*.pyc
